@@ -1,126 +1,143 @@
 
 import { useState } from "react";
+import { useTaskContext } from "@/contexts/TaskContext";
 import { Task } from "@/contexts/TaskContext";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { edit, trash2 } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
-  onUpdate: (updatedTask: Task) => void;
-  onDelete: () => void;
-  onDragStart: () => void;
+  columnId: string;
 }
 
-const TaskCard = ({ task, onUpdate, onDelete, onDragStart }: TaskCardProps) => {
+const TaskCard = ({ task, columnId }: TaskCardProps) => {
+  const { updateTask, deleteTask } = useTaskContext();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTask, setEditedTask] = useState<Task>(task);
-  
-  const tagColors: Record<string, string> = {
-    blue: "bg-task-blue text-blue-700",
-    green: "bg-task-green text-green-700",
-    yellow: "bg-task-yellow text-yellow-700",
-    purple: "bg-task-purple text-purple-700",
-    pink: "bg-task-pink text-pink-700",
-    orange: "bg-task-orange text-orange-700",
+  const [editedTask, setEditedTask] = useState({ ...task });
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setEditedTask((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    onUpdate(editedTask);
+  const handleTagChange = (value: string) => {
+    setEditedTask((prev) => ({ ...prev, tag: value }));
+  };
+
+  const handleSave = () => {
+    updateTask(columnId, editedTask);
     setIsEditing(false);
   };
 
+  const handleDelete = () => {
+    deleteTask(columnId, task.id);
+  };
+
+  const tagColors: Record<string, string> = {
+    blue: "bg-blue-100 text-blue-800",
+    green: "bg-green-100 text-green-800",
+    purple: "bg-purple-100 text-purple-800",
+    yellow: "bg-yellow-100 text-yellow-800",
+    red: "bg-red-100 text-red-800",
+  };
+
   return (
-    <>
-      <Card
-        className={`p-4 mb-2.5 task-card cursor-grab ${task.tag ? `border-l-4 border-l-${task.tag}-400` : ''}`}
-        draggable
-        onDragStart={onDragStart}
-      >
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-medium text-sm">{task.title}</h3>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setIsEditing(true)}
-            >
-              <edit className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-destructive"
-              onClick={onDelete}
-            >
-              <trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+    <Card className="mb-3 shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="p-3 pb-0 flex flex-row justify-between items-start">
+        <CardTitle className="text-base font-medium">{task.title}</CardTitle>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Task</DialogTitle>
+              </DialogHeader>
+              <p>Are you sure you want to delete this task?</p>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
-        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-          {task.description}
-        </p>
-        <div className="flex justify-between items-center">
-          <Badge variant="outline" className={`${tagColors[task.tag] || ''} text-xs px-2`}>
-            {task.tag.charAt(0).toUpperCase() + task.tag.slice(1)}
-          </Badge>
+      </CardHeader>
+      <CardContent className="p-3 pt-1">
+        <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
+        <div className="flex items-center justify-between">
+          <span className={`text-xs px-2 py-0.5 rounded-full ${tagColors[task.tag] || "bg-gray-100"}`}>
+            {task.tag}
+          </span>
           <span className="text-xs text-muted-foreground">
             {new Date(task.createdAt).toLocaleDateString()}
           </span>
         </div>
-      </Card>
+      </CardContent>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label htmlFor="title" className="text-sm font-medium">Title</label>
+              <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
+                name="title"
                 value={editedTask.title}
-                onChange={(e) =>
-                  setEditedTask({ ...editedTask, title: e.target.value })
-                }
+                onChange={handleInputChange}
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="description" className="text-sm font-medium">Description</label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
+                name="description"
                 value={editedTask.description}
-                onChange={(e) =>
-                  setEditedTask({ ...editedTask, description: e.target.value })
-                }
-                rows={4}
+                onChange={handleInputChange}
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="tag" className="text-sm font-medium">Tag</label>
+              <Label htmlFor="tag">Priority</Label>
               <Select
                 value={editedTask.tag}
-                onValueChange={(value) =>
-                  setEditedTask({ ...editedTask, tag: value })
-                }
+                onValueChange={handleTagChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a tag" />
+                  <SelectValue placeholder="Select a priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="blue">Blue</SelectItem>
-                  <SelectItem value="green">Green</SelectItem>
-                  <SelectItem value="yellow">Yellow</SelectItem>
-                  <SelectItem value="purple">Purple</SelectItem>
-                  <SelectItem value="pink">Pink</SelectItem>
-                  <SelectItem value="orange">Orange</SelectItem>
+                  <SelectItem value="blue">Low</SelectItem>
+                  <SelectItem value="green">Normal</SelectItem>
+                  <SelectItem value="yellow">Medium</SelectItem>
+                  <SelectItem value="purple">High</SelectItem>
+                  <SelectItem value="red">Urgent</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -129,11 +146,11 @@ const TaskCard = ({ task, onUpdate, onDelete, onDragStart }: TaskCardProps) => {
             <Button variant="outline" onClick={() => setIsEditing(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit}>Save Changes</Button>
+            <Button onClick={handleSave}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </Card>
   );
 };
 
