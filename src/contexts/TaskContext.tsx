@@ -314,9 +314,9 @@ export const TaskProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       if (toColumnId === "column-1") { // To Do column
         taskToMove.tag = "blue"; // Blue for to-do tasks
       } else if (toColumnId === "column-2") { // In Progress column
-        taskToMove.tag = "yellow"; // Yellow for in-progress tasks
+        taskToMove.tag = "green"; // Green for in-progress tasks
       } else if (toColumnId === "column-3") { // Done column
-        taskToMove.tag = "green"; // Green for completed tasks
+        taskToMove.tag = "yellow"; // Yellow for completed tasks
       }
     }
 
