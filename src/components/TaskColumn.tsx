@@ -34,6 +34,7 @@ const TaskColumn = ({ columnId, title, tasks }: TaskColumnProps) => {
     tag: "green", // Default tag
   });
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -65,10 +66,18 @@ const TaskColumn = ({ columnId, title, tasks }: TaskColumnProps) => {
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    if (!isDragOver) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setIsDragOver(false);
     const taskId = e.dataTransfer.getData("taskId");
     const fromColumnId = e.dataTransfer.getData("fromColumnId");
     
@@ -79,8 +88,11 @@ const TaskColumn = ({ columnId, title, tasks }: TaskColumnProps) => {
 
   return (
     <div 
-      className="flex flex-col w-72 min-w-72 bg-muted/30 rounded-lg p-2"
+      className={`flex flex-col w-72 min-w-72 rounded-lg p-2 transition-colors duration-200 ${
+        isDragOver ? "bg-primary/10 ring-2 ring-primary/30" : "bg-muted/30"
+      }`}
       onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       <div className="flex justify-between items-center mb-3 px-2">

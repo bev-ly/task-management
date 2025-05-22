@@ -302,8 +302,23 @@ export const TaskProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     const sourceColumn = activeBoard.columns.find((col) => col.id === fromColumnId);
     if (!sourceColumn) return;
 
-    const taskToMove = sourceColumn.tasks.find((task) => task.id === taskId);
-    if (!taskToMove) return;
+    const taskIndex = sourceColumn.tasks.findIndex((task) => task.id === taskId);
+    if (taskIndex === -1) return;
+    
+    // Clone the task to avoid direct mutation
+    const taskToMove = { ...sourceColumn.tasks[taskIndex] };
+    
+    // Update task tag based on destination column
+    if (fromColumnId !== toColumnId) {
+      // Set tag color based on destination column
+      if (toColumnId === "column-1") { // To Do column
+        taskToMove.tag = "blue"; // Blue for to-do tasks
+      } else if (toColumnId === "column-2") { // In Progress column
+        taskToMove.tag = "yellow"; // Yellow for in-progress tasks
+      } else if (toColumnId === "column-3") { // Done column
+        taskToMove.tag = "green"; // Green for completed tasks
+      }
+    }
 
     // Create updated board with task moved
     setActiveBoard((prevBoard) => {
